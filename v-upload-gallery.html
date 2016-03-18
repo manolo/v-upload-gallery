@@ -1,0 +1,102 @@
+<link rel="import" href="bower_components/polymer/polymer.html">
+<link rel="import" href="bower_components/iron-image/iron-image.html">
+<link rel="import" href="bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="bower_components/neon-animation/neon-animations.html">
+
+
+<dom-module id="v-upload-gallery">
+  <style is="custom-style">
+    iron-image {
+      border-radius: 8px;
+      margin: 10px;
+      width: 200px;
+      height: 200px;
+      cursor: pointer;
+    }
+    #preview {
+      width: auto;
+      height: auto;
+      max-width: 500px;
+      border: none;
+      --iron-image-width: 100%;
+      cursor: default;
+    }
+    #dialog {
+      background: rgba(76, 175, 80, 0.09);
+    }
+  </style>
+  <template>
+    <paper-dialog id="dialog" entry-animation="scale-up-animation" exit-animation="fade-out-animation" with-backdrop>
+      <iron-image id="preview"></iron-image>
+    </paper-dialog>
+  </template>
+</dom-module>
+<script>
+  Polymer({
+    is: "v-upload-gallery",
+    _count: 0,
+    _getDataUriAjax: function(img) {
+      var xmlHTTP = new XMLHttpRequest();
+      xmlHTTP.open('GET', img.src, true);
+      xmlHTTP.responseType = 'arraybuffer';
+      xmlHTTP.onload = function(e) {
+        var arr = new Uint8Array(this.response);
+        var raw = String.fromCharCode.apply(null,arr);
+        var b64 = btoa(raw);
+        var dataURL="data:image/jpeg;base64," + b64;
+      };
+      xmlHTTP.send();
+    },
+    _getDataUriCanvas: function(img) {
+      var image = new Image();
+      image.onload = function () {
+        var canvas = document.createElement('canvas');
+        canvas.width = this.naturalWidth; // or 'width' if you want a special/scaled size
+        canvas.height = this.naturalHeight; // or 'height' if you want a special/scaled size
+        canvas.getContext('2d').drawImage(this, 0, 0);
+        img.src = canvas.toDataURL('image/png');
+      };
+      image.setAttribute('crossOrigin', 'anonymous');
+      image.src = img.src;
+    },
+    _createImage: function(arg) {
+      var img = document.createElement('iron-image');
+      img.setAttribute('sizing', 'cover');
+      img.setAttribute('preload', true);
+      if (arg instanceof File) {
+        var reader  = new FileReader();
+        reader.addEventListener("load", function () {
+          img.src = reader.result;
+        }, false);
+        reader.readAsDataURL(arg);
+      } else  {
+        img.src = typeof arg == 'string' && arg || arg.targetUrl || arg.src;
+        this._getDataUriAjax(img);
+      }
+      return img;
+    },
+    _getImg: function(idx) {
+      return Polymer.dom(this.root).querySelector('iron-image[idx="' + idx + '"]');
+    },
+    addImage: function(arg) {
+      var img = this._createImage(arg);
+      img.setAttribute('idx', arg.idx = this._count++);
+      Polymer.dom(this.root).appendChild(img);
+      window.r = this.root;
+    },
+    removeImage: function(arg) {
+      this.removeChild(arg.idx);
+    },
+    _onTap: function(e) {
+      var img = e.target.parentElement;
+      if (img && img.src) {
+        this.$.preview.src = img.src;
+        this.$.dialog.open();
+      }
+    },
+    listeners: {
+      tap: '_onTap'
+    }
+
+  });
+</script>

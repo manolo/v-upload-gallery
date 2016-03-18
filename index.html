@@ -1,0 +1,63 @@
+<!doctype html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1" />
+  <script src="bower_components/webcomponentsjs/webcomponents.js"></script>
+  <link rel="import" href="bower_components/iron-flex-layout/iron-flex-layout.html">
+  <link rel="import" href="bower_components/paper-styles/paper-styles.html">
+  <link rel="import" href="bower_components/vaadin-mock-xhr/vaadin-mock-xhr.html">
+  <link rel="import" href="bower_components/vaadin-upload/vaadin-upload.html">
+  <link rel="import" href="bower_components/iron-ajax/iron-ajax.html">
+  <link rel="import" href="v-upload-gallery.html">
+
+  <style is="custom-style">
+    #gallery {
+      background: rgba(69, 86, 71, 0.96);
+      overflow-y: auto;
+    }
+    #uploader {
+      background: rgba(76, 175, 80, 0.33);
+      min-width: 200px;
+      padding: 5px;
+      --primary-color: #396;
+    }
+  </style>
+
+</head>
+<body unresolved />
+
+<iron-ajax id="ajax"
+    url="images.json"
+    handle-as="json"></iron-ajax>
+
+<div class="layout horizontal fit">
+  <v-upload-gallery id="gallery" class="flex" accept="image/*"></v-upload-gallery>
+  <vaadin-upload id="uploader" nodrop></vaadin-upload>
+</div>
+
+<script>
+  HTMLImports.whenReady(function() {
+    var ajax = document.querySelector('iron-ajax#ajax');
+    var upload = document.querySelector('vaadin-upload#uploader');
+    var gallery = document.querySelector('v-upload-gallery');
+
+    ajax.addEventListener('response', function(event) {
+      event.detail.response.forEach(function(o) {
+        gallery.addImage(o.src);
+      });
+    });
+    ajax.generateRequest();
+
+    upload.addEventListener('upload-start', function(event) {
+      gallery.addImage(event.detail.file);
+    });
+
+    upload.addEventListener('upload-success', function(e) {
+      var file = e.detail.file;
+      upload.splice('files', upload.files.indexOf(file), 1)
+    });
+  });
+</script>
+</body>
+</html>
