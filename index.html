@@ -10,7 +10,6 @@
   <link rel="import" href="bower_components/vaadin-upload/vaadin-upload.html">
   <link rel="import" href="bower_components/iron-ajax/iron-ajax.html">
   <link rel="import" href="bower_components/paper-input/paper-input.html">
-  <link rel="import" href="bower_components/paper-input/paper-input-error.html">
   <link rel="import" href="v-upload-gallery.html">
 
   <style is="custom-style">
@@ -35,7 +34,7 @@
     #url {
       padding: 0px 20px 10px 20px;
     }
-    #drop {
+    #drop, #trash{
       border: none;
       border-radius: 0px;
       --vaadin-upload-button-add: {
@@ -45,10 +44,16 @@
           text-align: center;
       }
     }
+    #drop {
+      --vaadin-upload-drag-ripple: {
+        color: rgba(69, 86, 71, 0.96);
+      }
+    }
     #trash {
-      text-align: center;
       height: 200px;
-      color: grey;
+      --vaadin-upload-drag-ripple: {
+        color: red;
+      }
     }
     #drop iron-icon,
     #trash iron-icon {
@@ -56,11 +61,6 @@
       height: 50px;
       margin-top: 70px;
     }
-    #trash[dragover] {
-      color: red;
-      border: dotted red 1px;
-    }
-
   </style>
 
 </head>
@@ -80,9 +80,9 @@
     <vaadin-upload id="drop" accept="image/*" class="flex">
       <iron-icon icon="visibility" class="drop-label"></iron-icon>
     </vaadin-upload>
-    <div id="trash">
-      <iron-icon icon="delete"></iron-icon>
-    </div>
+    <vaadin-upload id="trash">
+      <iron-icon icon="delete" class="drop-label"></iron-icon>
+    </vaadin-upload>
   </div>
 </div>
 
@@ -115,7 +115,7 @@
     });
 
     // On drop we dont upload files, just add to the UI
-    // We don't have proper file add event to prevent default
+    // We don't have proper file-add event to prevent default
     // and avoid adding it to the files queue, so we have to
     // workaround removing it again from the files.
     drop.addEventListener('upload-before', function(e) {
@@ -125,11 +125,7 @@
       drop.splice('files', upload.files.indexOf(file), 1)
     });
 
-    drop.addEventListener('drop', function(e) {
-      console.log("CROPEED", e);
-    });
-
-    // manually add images to the UI
+    // We can use image URLs to manually add images to the UI
     input.addEventListener('keydown', function(e) {
       if (e.keyCode == 13) {
         gallery.addImage(input.value);
@@ -137,16 +133,8 @@
       }
     });
 
-    trash.addEventListener('dragover', function(e) {
-      e.preventDefault();
-      trash.setAttribute('dragover', true)
-    });
-    trash.addEventListener('dragleave', function(e) {
-      if (e.target == trash) {
-        e.preventDefault();
-        trash.removeAttribute('dragover');
-      }
-    });
+    // We take advantage of vaadin-upload for having a nice drop area
+    // to handle custom actions, in this case remove images from the UI
     trash.addEventListener('drop', function(e) {
       gallery.removeImage(e.dataTransfer.getData('idx'));
       trash.removeAttribute('dragover');

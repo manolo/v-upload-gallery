@@ -80,18 +80,16 @@
       });
       return img;
     },
-    _getImg: function(idx) {
-      return Polymer.dom(this.root).querySelector('iron-image[idx="' + idx + '"]');
-    },
     addImage: function(arg) {
       var img = this._createImage(arg);
       Polymer.dom(this.root).appendChild(img);
       window.r = this.root;
     },
-    removeImage: function(arg) {
-      var i = this._getImg(arg);
-      console.log("REM", i)
-      this.removeChild(i);
+    removeImage: function(idx) {
+      var img = Polymer.dom(this.root).querySelector('iron-image[idx="' + idx + '"]');
+      if (img) {
+        this.removeChild(img);
+      }
     },
     _onTap: function(e) {
       var img = e.target.parentElement;
