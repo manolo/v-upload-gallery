@@ -27,7 +27,7 @@
   </style>
   <template>
     <paper-dialog id="dialog" entry-animation="scale-up-animation" exit-animation="fade-out-animation" with-backdrop>
-      <iron-image id="preview"></iron-image>
+      <iron-image id="preview" draggable="true"></iron-image>
     </paper-dialog>
   </template>
 </dom-module>
@@ -63,6 +63,8 @@
       var img = document.createElement('iron-image');
       img.setAttribute('sizing', 'cover');
       img.setAttribute('preload', true);
+      img.setAttribute('draggable', true);
+      img.setAttribute('idx', img.idx = arg.idx = this._count++);
       if (arg instanceof File) {
         var reader  = new FileReader();
         reader.addEventListener("load", function () {
@@ -73,6 +75,9 @@
         img.src = typeof arg == 'string' && arg || arg.targetUrl || arg.src;
         // this._getDataUriAjax(img);
       }
+      img.addEventListener('dragstart', function(e) {
+        e.dataTransfer.setData('idx', img.idx);
+      });
       return img;
     },
     _getImg: function(idx) {
@@ -80,12 +85,13 @@
     },
     addImage: function(arg) {
       var img = this._createImage(arg);
-      img.setAttribute('idx', arg.idx = this._count++);
       Polymer.dom(this.root).appendChild(img);
       window.r = this.root;
     },
     removeImage: function(arg) {
-      this.removeChild(arg.idx);
+      var i = this._getImg(arg);
+      console.log("REM", i)
+      this.removeChild(i);
     },
     _onTap: function(e) {
       var img = e.target.parentElement;
@@ -97,6 +103,5 @@
     listeners: {
       tap: '_onTap'
     }
-
   });
 </script>

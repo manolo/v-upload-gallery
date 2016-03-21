@@ -20,7 +20,8 @@
     }
     #uploader,
     #drop,
-    #url {
+    #url,
+    #trash {
       background: rgba(76, 175, 80, 0.33);
     }
     #uploader {
@@ -37,10 +38,29 @@
     #drop {
       border: none;
       border-radius: 0px;
-      --vaadin-upload-buttons: {
+      --vaadin-upload-button-add: {
           display: none;
       }
+      --vaadin-upload-drop-label: {
+          text-align: center;
+      }
     }
+    #trash {
+      text-align: center;
+      height: 200px;
+      color: grey;
+    }
+    #drop iron-icon,
+    #trash iron-icon {
+      width: 50px;
+      height: 50px;
+      margin-top: 70px;
+    }
+    #trash[dragover] {
+      color: red;
+      border: dotted red 1px;
+    }
+
   </style>
 
 </head>
@@ -58,8 +78,11 @@
   <div class="layout vertical">
     <vaadin-upload id="uploader" accept="image/*" nodrop></vaadin-upload>
     <vaadin-upload id="drop" accept="image/*" class="flex">
-      <iron-icon icon="perm-media" class="drop-label"></iron-icon>
+      <iron-icon icon="visibility" class="drop-label"></iron-icon>
     </vaadin-upload>
+    <div id="trash">
+      <iron-icon icon="delete"></iron-icon>
+    </div>
   </div>
 </div>
 
@@ -70,6 +93,7 @@
     var drop = document.querySelector('vaadin-upload#drop');
     var gallery = document.querySelector('v-upload-gallery');
     var input = document.querySelector('paper-input#url');
+    var trash = document.querySelector('#trash');
 
     ajax.addEventListener('response', function(event) {
       event.detail.response.forEach(function(o) {
@@ -101,12 +125,31 @@
       drop.splice('files', upload.files.indexOf(file), 1)
     });
 
+    drop.addEventListener('drop', function(e) {
+      console.log("CROPEED", e);
+    });
+
     // manually add images to the UI
     input.addEventListener('keydown', function(e) {
       if (e.keyCode == 13) {
         gallery.addImage(input.value);
         input.value = "";
       }
+    });
+
+    trash.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      trash.setAttribute('dragover', true)
+    });
+    trash.addEventListener('dragleave', function(e) {
+      if (e.target == trash) {
+        e.preventDefault();
+        trash.removeAttribute('dragover');
+      }
+    });
+    trash.addEventListener('drop', function(e) {
+      gallery.removeImage(e.dataTransfer.getData('idx'));
+      trash.removeAttribute('dragover');
     });
   });
 </script>
