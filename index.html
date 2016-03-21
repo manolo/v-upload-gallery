@@ -9,6 +9,8 @@
   <link rel="import" href="bower_components/vaadin-mock-xhr/vaadin-mock-xhr.html">
   <link rel="import" href="bower_components/vaadin-upload/vaadin-upload.html">
   <link rel="import" href="bower_components/iron-ajax/iron-ajax.html">
+  <link rel="import" href="bower_components/paper-input/paper-input.html">
+  <link rel="import" href="bower_components/paper-input/paper-input-error.html">
   <link rel="import" href="v-upload-gallery.html">
 
   <style is="custom-style">
@@ -16,11 +18,28 @@
       background: rgba(69, 86, 71, 0.96);
       overflow-y: auto;
     }
-    #uploader {
+    #uploader,
+    #drop,
+    #url {
       background: rgba(76, 175, 80, 0.33);
+    }
+    #uploader {
       min-width: 200px;
       padding: 5px;
       --primary-color: #396;
+      --vaadin-upload-button-add: {
+        width: 100%;
+      }
+    }
+    #url {
+      padding: 0px 20px 10px 20px;
+    }
+    #drop {
+      border: none;
+      border-radius: 0px;
+      --vaadin-upload-buttons: {
+          display: none;
+      }
     }
   </style>
 
@@ -32,30 +51,62 @@
     handle-as="json"></iron-ajax>
 
 <div class="layout horizontal fit">
-  <v-upload-gallery id="gallery" class="flex" accept="image/*"></v-upload-gallery>
-  <vaadin-upload id="uploader" nodrop></vaadin-upload>
+  <div class="layout vertical flex">
+    <v-upload-gallery id="gallery" class="flex"></v-upload-gallery>
+    <paper-input id="url" label="Image URL" auto-validate pattern="^https?://[^\s/$.?#].[^\s]*$" error-message="Invalid URL"></paper-input>
+  </div>
+  <div class="layout vertical">
+    <vaadin-upload id="uploader" accept="image/*" nodrop></vaadin-upload>
+    <vaadin-upload id="drop" accept="image/*" class="flex">
+      <iron-icon icon="perm-media" class="drop-label"></iron-icon>
+    </vaadin-upload>
+  </div>
 </div>
 
 <script>
   HTMLImports.whenReady(function() {
     var ajax = document.querySelector('iron-ajax#ajax');
     var upload = document.querySelector('vaadin-upload#uploader');
+    var drop = document.querySelector('vaadin-upload#drop');
     var gallery = document.querySelector('v-upload-gallery');
+    var input = document.querySelector('paper-input#url');
 
     ajax.addEventListener('response', function(event) {
       event.detail.response.forEach(function(o) {
         gallery.addImage(o.src);
       });
     });
+    // auto attribute sometimes is run before we add the response handler
     ajax.generateRequest();
 
-    upload.addEventListener('upload-start', function(event) {
-      gallery.addImage(event.detail.file);
+    // Using upload-before instead of files-change because is simpler
+    upload.addEventListener('upload-before', function(e) {
+      gallery.addImage(e.detail.file);
     });
-
+    upload.i18n.addFiles.many = "upload images";
+    // Remove progress when the file has been uploaded
     upload.addEventListener('upload-success', function(e) {
       var file = e.detail.file;
       upload.splice('files', upload.files.indexOf(file), 1)
+    });
+
+    // On drop we dont upload files, just add to the UI
+    // We don't have proper file add event to prevent default
+    // and avoid adding it to the files queue, so we have to
+    // workaround removing it again from the files.
+    drop.addEventListener('upload-before', function(e) {
+      e.preventDefault()
+      var file = e.detail.file;
+      gallery.addImage(file);
+      drop.splice('files', upload.files.indexOf(file), 1)
+    });
+
+    // manually add images to the UI
+    input.addEventListener('keydown', function(e) {
+      if (e.keyCode == 13) {
+        gallery.addImage(input.value);
+        input.value = "";
+      }
     });
   });
 </script>

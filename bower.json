@@ -25,6 +25,7 @@
     "vaadin-mock-xhr": "manolo/vaadin-mock-xhr",
     "paper-dialog": "^1.0.4",
     "neon-animation": "^1.1.1",
-    "iron-ajax": "^1.2.0"
+    "iron-ajax": "^1.2.0",
+    "paper-input": "^1.1.10"
   }
 }

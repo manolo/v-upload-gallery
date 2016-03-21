@@ -71,7 +71,7 @@
         reader.readAsDataURL(arg);
       } else  {
         img.src = typeof arg == 'string' && arg || arg.targetUrl || arg.src;
-        this._getDataUriAjax(img);
+        // this._getDataUriAjax(img);
       }
       return img;
     },
