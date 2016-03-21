@@ -24,11 +24,16 @@
       background: rgba(76, 175, 80, 0.33);
     }
     #uploader {
+      color: #9b9b9b;
       min-width: 200px;
       padding: 5px;
+      text-align: center;
       --primary-color: #396;
       --vaadin-upload-button-add: {
         width: 100%;
+      }
+      --vaadin-upload-drop-label: {
+        display: none;
       }
     }
     #url {
@@ -50,16 +55,20 @@
       }
     }
     #trash {
-      height: 200px;
       --vaadin-upload-drag-ripple: {
         color: red;
       }
     }
     #drop iron-icon,
-    #trash iron-icon {
+    #trash iron-icon,
+    #plusicon {
       width: 50px;
       height: 50px;
       margin-top: 70px;
+    }
+    #drop,
+    #trash {
+      height: 200px;
     }
   </style>
 
@@ -74,8 +83,10 @@
     <paper-input id="url" label="Image URL" auto-validate pattern="^https?://[^\s/$.?#].[^\s]*$" error-message="Invalid URL"></paper-input>
   </div>
   <div class="layout vertical">
-    <vaadin-upload id="uploader" accept="image/*" nodrop></vaadin-upload>
-    <vaadin-upload id="drop" accept="image/*" class="flex">
+    <vaadin-upload id="uploader" accept="image/*" class="flex">
+      <iron-icon id="plusicon" icon="cloud-upload"></iron-icon>
+    </vaadin-upload>
+    <vaadin-upload id="drop" accept="image/*">
       <iron-icon icon="visibility" class="drop-label"></iron-icon>
     </vaadin-upload>
     <vaadin-upload id="trash">
@@ -101,7 +112,7 @@
     // auto attribute sometimes is run before we add the response handler
     ajax.generateRequest();
 
-    // Using upload-before instead of files-change because is simpler
+    // Using upload-before instead of files-change because it is simpler
     upload.addEventListener('upload-before', function(e) {
       gallery.addImage(e.detail.file);
     });

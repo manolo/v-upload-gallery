@@ -35,30 +35,6 @@
   Polymer({
     is: "v-upload-gallery",
     _count: 0,
-    _getDataUriAjax: function(img) {
-      var xmlHTTP = new XMLHttpRequest();
-      xmlHTTP.open('GET', img.src, true);
-      xmlHTTP.responseType = 'arraybuffer';
-      xmlHTTP.onload = function(e) {
-        var arr = new Uint8Array(this.response);
-        var raw = String.fromCharCode.apply(null,arr);
-        var b64 = btoa(raw);
-        var dataURL="data:image/jpeg;base64," + b64;
-      };
-      xmlHTTP.send();
-    },
-    _getDataUriCanvas: function(img) {
-      var image = new Image();
-      image.onload = function () {
-        var canvas = document.createElement('canvas');
-        canvas.width = this.naturalWidth; // or 'width' if you want a special/scaled size
-        canvas.height = this.naturalHeight; // or 'height' if you want a special/scaled size
-        canvas.getContext('2d').drawImage(this, 0, 0);
-        img.src = canvas.toDataURL('image/png');
-      };
-      image.setAttribute('crossOrigin', 'anonymous');
-      image.src = img.src;
-    },
     _createImage: function(arg) {
       var img = document.createElement('iron-image');
       img.setAttribute('sizing', 'cover');
@@ -100,6 +76,34 @@
     },
     listeners: {
       tap: '_onTap'
+    },
+
+    // Unused but left here for reference
+    _getDataUriAjax: function(img) {
+      var xmlHTTP = new XMLHttpRequest();
+      xmlHTTP.open('GET', img.src, true);
+      xmlHTTP.responseType = 'arraybuffer';
+      xmlHTTP.onload = function(e) {
+        var arr = new Uint8Array(this.response);
+        var raw = String.fromCharCode.apply(null,arr);
+        var b64 = btoa(raw);
+        var dataURL="data:image/jpeg;base64," + b64;
+        img.dataURL = dataURL;
+      };
+      xmlHTTP.send();
+    },
+    // Unused but left here for reference
+    _getDataUriCanvas: function(img) {
+      var image = new Image();
+      image.onload = function () {
+        var canvas = document.createElement('canvas');
+        canvas.width = this.naturalWidth;
+        canvas.height = this.naturalHeight;
+        canvas.getContext('2d').drawImage(this, 0, 0);
+        img.dataURL = canvas.toDataURL('image/png');
+      };
+      image.setAttribute('crossOrigin', 'anonymous');
+      image.src = img.src;
     }
   });
 </script>
