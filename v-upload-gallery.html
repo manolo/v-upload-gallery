@@ -74,8 +74,13 @@
         this.$.dialog.open();
       }
     },
+    _prevent: function(e) {
+       e.preventDefault();
+    },
     listeners: {
-      tap: '_onTap'
+      tap: '_onTap',
+      dragover: '_prevent',
+      drop: '_prevent'
     },
 
     // Unused but left here for reference

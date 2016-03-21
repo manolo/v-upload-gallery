@@ -22,13 +22,14 @@
     #url,
     #trash {
       background: rgba(76, 175, 80, 0.33);
+      --primary-color: #396;
     }
     #uploader {
       color: #9b9b9b;
       min-width: 200px;
       padding: 5px;
       text-align: center;
-      --primary-color: #396;
+
       --vaadin-upload-button-add: {
         width: 100%;
       }
@@ -40,7 +41,6 @@
       padding: 0px 20px 10px 20px;
     }
     #drop, #trash{
-      border: none;
       border-radius: 0px;
       --vaadin-upload-button-add: {
           display: none;
@@ -49,7 +49,8 @@
           text-align: center;
       }
     }
-    #drop {
+    #drop,
+    #uploader {
       --vaadin-upload-drag-ripple: {
         color: rgba(69, 86, 71, 0.96);
       }
@@ -142,12 +143,47 @@
       }
     });
 
+    trash.addEventListener('dragenter', function(e) {
+      console.log(e.dataTransfer.types);
+    });
+
+
     // We take advantage of vaadin-upload for having a nice drop area
     // to handle custom actions, in this case remove images from the UI
     trash.addEventListener('drop', function(e) {
       gallery.removeImage(e.dataTransfer.getData('idx'));
       trash.removeAttribute('dragover');
     });
+    // We don't want to do anything on drop when adding desktop files
+    trash.addEventListener('upload-before', function(e) {
+      e.preventDefault()
+      var file = e.detail.file;
+      trash.set('files', []);
+    });
+
+    // Monkey-patch uploaders so as they only ripple if the dragged object
+    // is the correct type
+    upload.__onDragover = trash._onDragover;
+    upload._onDragover = function(e) {
+      e.preventDefault();
+      if (e.dataTransfer.types[0] == 'Files') {
+          upload.__onDragover(e);
+      }
+    }
+    drop.__onDragover = trash._onDragover;
+    drop._onDragover = function(e) {
+      e.preventDefault();
+      if (e.dataTransfer.types[0] == 'Files') {
+          drop.__onDragover(e);
+      }
+    }
+    trash.__onDragover = trash._onDragover;
+    trash._onDragover = function(e) {
+      e.preventDefault();
+      if (e.dataTransfer.types[0] == 'idx') {
+          trash.__onDragover(e);
+      }
+    }
   });
 </script>
 </body>
