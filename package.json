@@ -1,0 +1,23 @@
+{
+  "name": "v-upload-gallery",
+  "version": "1.0.0",
+  "description": "A Polymer demo application for dog-fooding `vaadin-upload` element.",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manolo/v-upload-gallery.git"
+  },
+  "author": "manolo@apache.org",
+  "license": "Apache 2.0",
+  "bugs": {
+    "url": "https://github.com/manolo/v-upload-gallery/issues"
+  },
+  "homepage": "https://github.com/manolo/v-upload-gallery#readme",
+  "dependencies": {
+    "browser-sync": "^2.11.2",
+    "gulp": "^3.9.1"
+  }
+}
