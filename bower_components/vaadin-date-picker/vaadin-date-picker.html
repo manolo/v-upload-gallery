@@ -25,7 +25,7 @@ Custom property | Description | Default
 ----------------|-------------|----------
 `--vaadin-date-picker-background` | Background for picker content and footer | `--primary-background-color`
 `--vaadin-date-picker-toolbar-background` | Background for picker toolbar | `--paper-grey-200`
-`--vaadin-date-picker-toolbar-color` | Text color for picker toolbar items | `--default-primary-color`
+`--vaadin-date-picker-toolbar-color` | Text color for picker toolbar items | `--primary-color`
 `--vaadin-date-picker-yearscroller-background` | Background for the year scroller | `--dark-theme-background-color`
 `--vaadin-date-picker-yearscroller-color` | Text color for the year scroller | `--dark-theme-secondary-color`
 `--vaadin-date-picker-calendar-title-color` | Text color for a month calendar title | `--primary-text-color`
@@ -33,15 +33,14 @@ Custom property | Description | Default
 `--vaadin-date-picker-weekday-cell-color` | Text color for a month calendar weekday cell | `--secondary-text-color`
 `--vaadin-date-picker-today-color` | Text color for a month calendar today cell | `--accent-color`
 `--vaadin-date-picker-selected-color` | Text color for a month calendar selected cell | `--light-primary-color`
-`--vaadin-date-picker-selected-background` | Text color for a month calendar selected cell | `--default-primary-color`
+`--vaadin-date-picker-selected-background` | Text color for a month calendar selected cell | `--primary-color`
 `--vaadin-date-picker-focused-background` | Text color for a month calendar focused cell | `--light-primary-color`
 `--vaadin-date-picker-today-selected-color` | Text color for a month calendar selected today cell | `--light-accent-color`
-`--vaadin-date-picker-header-background` | Background for the picker header | `--default-primary-color`
-`--vaadin-date-picker-footer-color` | Text color for the picker footer | `--default-primary-color`
+`--vaadin-date-picker-header-background` | Background for the picker header | `--primary-color`
+`--vaadin-date-picker-footer-color` | Text color for the picker footer | `--primary-color`
 `--vaadin-date-picker-calendar-icon` | Mixin applied to the calendar icon | `{}`
 `--vaadin-date-picker-clear-icon` | Mixin applied to the clear icon | `{}`
 `--vaadin-date-picker-scrollers-fade` | Mixin applied to the scrollers fade element | `{}`
-`--vaadin-date-picker-yearscroller-item` | Mixin applied to a year scroller item after element | `{}`
 `--vaadin-date-picker-header` | Mixin applied to the picker header | `{}`
 `--vaadin-date-picker-toolbar` | Mixin applied to the picker toolbar | `{}`
 `--vaadin-date-picker-footer` | Mixin applied to the picker footer | `{}`
@@ -161,11 +160,11 @@ See paper-input-container documentation for styling the included input fields
       }
     </style>
 
-    <paper-input-container id="inputcontainer" hideclear$="[[_hideClearIcon(_selectedDate, _opened, _fullscreen)]]" tabindex$="[[_getTabIndex(disabled, readonly)]]" on-touchend="_preventDefault" on-tap="open" on-keydown="_onKeydown" disabled$="[[disabled]]" readonly$="[[readonly]]" opened$="[[_opened]]">
+    <paper-input-container id="inputcontainer" hideclear$="[[_hideClearIcon(_selectedDate, _opened, _fullscreen)]]" tabindex$="[[_getTabIndex(disabled, readonly)]]" on-touchend="_preventDefault" on-tap="open" on-keydown="_onKeydown" disabled$="[[disabled]]" opened$="[[_opened]]" auto-validate$="[[autoValidate]]">
       <label id="label">[[label]]</label>
-      <input id="input" is="iron-input" autocomplete="off" bind-value="[[_formatDisplayed(_selectedDate, i18n.formatDate)]]" type="text" invalid="[[invalid]]" name$="[[name]]" required$="[[required]]" tabindex="-1" on-focus="_focusInputContainer">
+      <input id="input" is="iron-input" autocomplete="off" bind-value="[[_formatDisplayed(_selectedDate, i18n.formatDate)]]" type="text" invalid="[[invalid]]" name$="[[name]]" required$="[[required]]" tabindex="-1" on-focus="_focusInputContainer" validator="[[validator]]" readonly$="[[readonly]]" disabled$="[[disabled]]">
 
-      <div suffix id="clear" on-tap="_clear" hidden$="[[_hideClearIcon(value, opened)]]">
+      <div suffix id="clear" on-tap="_clear">
         <iron-icon icon="clear"></iron-icon>
         <paper-ripple class="circle" center></paper-ripple>
       </div>
@@ -246,30 +245,46 @@ See paper-input-container documentation for styling the included input fields
 
         /**
          * The object used to localize this component.
+         * To change the default localization, replace the entire
+         * _i18n_ object or just the property you want to modify.
          *
-         * `i18n.monthNames`
+         * The object has the following JSON structure and default values:
+
+      {
+        // An array with the full names of months starting
+        // with January.
+        monthNames: [
+          'January', 'February', 'March', 'April', 'May',
+          'June', 'July', 'August', 'September',
+          'October', 'November', 'December'
+        ],
+
+        // An array with the short names of days starting
+        // with Sunday.
+        weekdaysShort: [
+          'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'
+        ],
+
+        // An integer indicating the first day of the week
+        // (0 = Sunday, 1 = Monday, etc.).
+        firstDayOfWeek: 0,
+
+        // Translation of the Today shortcut button text.
+        today: 'Today',
+
+        // Translation of the Cancel button text.
+        cancel: 'Cancel',
+
+        // A function to format given `Date` object as
+        // string.
+        formatDate: function(d) {
+          // returns a string representation of the given
+          // Date object in 'MM/DD/YYYY' -format
+        }
+      }
+
          *
-         *  An array with the full names of months starting with January.
-         *
-         * `i18n.weekdaysShort`
-         *
-         *  An array with the short names of days starting with Sunday.
-         *
-         * `i18n.firstDayOfWeek`
-         *
-         *  An integer indicating the first day of the week (0 = Sunday, 1 = Monday, etc.).
-         *
-         * `i18n.today`
-         *
-         *  Translation of the Today shortcut button text.
-         *
-         * `i18n.cancel`
-         *
-         *  Translation of the Cancel button text.
-         *
-         * `i18n.formatDate`
-         *
-         *  A function to format given `Date` object as `String`.
+         * @default {English/US}
          */
         i18n: {
           type: Object,
@@ -281,8 +296,8 @@ See paper-input-container documentation for styling the included input fields
               ],
               weekdaysShort: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
               firstDayOfWeek: 0,
-              today: 'today',
-              cancel: 'cancel',
+              today: 'Today',
+              cancel: 'Cancel',
               formatDate: function(d) {
                 return (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear();
               }
@@ -305,6 +320,10 @@ See paper-input-container documentation for styling the included input fields
           type: Boolean,
           value: false
         }
+      },
+
+      created: function() {
+        this._boundOnScroll = this._onScroll.bind(this);
       },
 
       /**
@@ -399,7 +418,7 @@ See paper-input-container documentation for styling the included input fields
           this.$.overlay.initialPosition || this._parseDate(this.initialPosition) || new Date();
         this.$.overlay.scrollToDate(this.$.overlay.focusedDate || this.$.overlay.initialPosition);
 
-        this.listen(window, 'scroll', '_onWindowScroll');
+        window.addEventListener('scroll', this._boundOnScroll, true);
 
         // Checking if the browser supports webkitOverflowScrolling
         if (document.createElement('div').style.webkitOverflowScrolling === '') {
@@ -431,7 +450,8 @@ See paper-input-container documentation for styling the included input fields
       },
 
       _onOverlayClosed: function() {
-        this.unlisten(window, 'scroll', '_onWindowScroll');
+        window.removeEventListener('scroll', this._boundOnScroll, true);
+
         this.$.inputcontainer.focus();
 
         if (this._touchPrevented) {
@@ -448,11 +468,13 @@ See paper-input-container documentation for styling the included input fields
         this._onOverlayClosed();
       },
 
-      _onWindowScroll: function() {
-        this.$.dropdown.style.bottom = 'auto';
-        this.$.dropdown.resetFit();
-        this._updateAlignmentAndPosition();
-        this.$.dropdown.fire('iron-resize');
+      _onScroll: function(e) {
+        if (e.target === window || !this.$.overlay.contains(e.target)) {
+          this.$.dropdown.style.bottom = 'auto';
+          this.$.dropdown.resetFit();
+          this._updateAlignmentAndPosition();
+          this.$.dropdown.fire('iron-resize');
+        }
       },
 
       _toggle: function(e) {
@@ -486,7 +508,7 @@ See paper-input-container documentation for styling the included input fields
        * @return {boolean}
        */
       _getValidity: function() {
-        return this.disabled || !this.required || Boolean(this.value);
+        return this.$.input.validate();
       },
 
       _focusInputContainer: function() {

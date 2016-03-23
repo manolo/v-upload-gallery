@@ -35,7 +35,7 @@
         @apply(--paper-font-button);
         @apply(--shadow-elevation-2dp);
         flex-shrink: 0;
-        color: var(--vaadin-date-picker-toolbar-color, --default-primary-color);
+        color: var(--vaadin-date-picker-toolbar-color, --primary-color);
         @apply(--vaadin-date-picker-toolbar);
       }
 
@@ -44,7 +44,7 @@
       }
 
       #toolbar iron-icon {
-        fill: var(--vaadin-date-picker-toolbar-color, --default-primary-color);
+        fill: var(--vaadin-date-picker-toolbar-color, --primary-color);
         padding: 0px;
         transition: transform 200ms;
         --iron-icon-width: 20px;
@@ -132,7 +132,8 @@
         /* Center the year scroller position. */
         --vaadin-infinite-scroller-buffer: {
           top: 50%;
-          margin-top: -37px;
+          margin-top: -25px;
+          width: 90px;
         }
       }
 
@@ -152,18 +153,6 @@
         border-left-color: var(--vaadin-date-picker-background, --primary-background-color);
       }
 
-      #yearScroller div:after {
-        content: "• • • • • ";
-        display: block;
-        font-size: 18px;
-        line-height: 23px;
-        width: 9px;
-        margin: 6px auto;
-        opacity: 0.3;
-        white-space: normal;
-        @apply(--vaadin-date-picker-yearscroller-item);
-      }
-
       :host(.animate) vaadin-infinite-scroller {
         transition: all 200ms;
       }
@@ -177,7 +166,7 @@
       }
 
       #header {
-        background: var(--vaadin-date-picker-header-background, --default-primary-color);
+        background: var(--vaadin-date-picker-header-background, --primary-color);
         padding: 0 14px 14px;
         display: flex;
         flex-shrink: 0;
@@ -231,7 +220,7 @@
         background: var(--vaadin-date-picker-background, --primary-background-color);
         z-index: 2;
         box-shadow: 0 -1px 4px 0 rgba(0, 0, 0, 0.50);
-        color: var(--vaadin-date-picker-footer-color, --default-primary-color);
+        color: var(--vaadin-date-picker-footer-color, --primary-color);
         flex-shrink: 0;
         @apply(--vaadin-date-picker-footer);
       }
@@ -258,9 +247,10 @@
           <vaadin-month-calendar i18n="[[i18n]]" month="[[_dateAfterXMonths(index)]]" selected-date="{{selectedDate}}" focused-date="[[focusedDate]]"></vaadin-month-calendar>
         </template>
       </vaadin-infinite-scroller>
-      <vaadin-infinite-scroller id="yearScroller" on-tap="_onYearTap" on-scroll="_onYearScroll" on-touchstart="_onYearScroll" item-height="150" buffer-size="10">
+      <vaadin-infinite-scroller id="yearScroller" on-tap="_onYearTap" on-scroll="_onYearScroll" on-touchstart="_onYearScroll" item-height="80" buffer-size="25">
         <template>
           <div>[[_yearAfterXYears(index)]]</div>
+          <div style="font-size: 18px; line-height: 56px; opacity: 0.3;">•</div>
         </template>
       </vaadin-infinite-scroller>
     </div>
@@ -375,17 +365,11 @@
       _onMonthScroll: function(e) {
         this._visibleMonthIndex = Math.floor(this.$.scroller.position);
         this.$.yearScroller.position = this.$.scroller.position / 12;
-        if (e) {
-          e.stopPropagation();
-        }
       },
 
       _onYearScroll: function(e) {
         this.$.scroller.position = this.$.yearScroller.position * 12;
         this._visibleMonthIndex = Math.floor(this.$.scroller.position);
-        if (e) {
-          e.stopPropagation();
-        }
       },
 
       _formatDisplayed: function(date, formatDate) {
@@ -453,7 +437,10 @@
             this.$.scroller.position = currentPos;
             window.requestAnimationFrame(smoothScroll);
           } else {
-            this.fire('scroll-animation-finished', {position: this._targetPosition, oldPosition: initialPosition});
+            this.fire('scroll-animation-finished', {
+              position: this._targetPosition,
+              oldPosition: initialPosition
+            });
             this.$.scroller.position = this._targetPosition;
             this._targetPosition = undefined;
           }
@@ -575,46 +562,49 @@
       _onKeydown: function(e) {
         var focus = this._currentlyFocusedDate();
 
-        e.preventDefault();
+        var eventKey = this._eventKey(e);
+        if (eventKey) {
+          e.preventDefault();
 
-        switch (this._eventKey(e)) {
-          case 'down':
-            this._moveFocusByDays(7);
-            break;
-          case 'up':
-            this._moveFocusByDays(-7);
-            break;
-          case 'right':
-            this._moveFocusByDays(1);
-            break;
-          case 'left':
-            this._moveFocusByDays(-1);
-            break;
-          case 'enter':
-            if (this.focusedDate) {
-              this.selectedDate = this.focusedDate;
-            }
-            this._close();
-            break;
-          case 'space':
-            if (this._dateEquals(this.focusedDate, this.selectedDate)) {
-              this.selectedDate = '';
-            } else {
-              this.selectedDate = this.focusedDate;
-            }
-            break;
-          case 'home':
-            this.focusedDate = new Date(focus.getFullYear(), focus.getMonth(), 1);
-            break;
-          case 'end':
-            this.focusedDate = new Date(focus.getFullYear(), focus.getMonth() + 1, 0);
-            break;
-          case 'pagedown':
-            this._moveFocusByMonths(e.shiftKey ? 12 : 1);
-            break;
-          case 'pageup':
-            this._moveFocusByMonths(e.shiftKey ? -12 : -1);
-            break;
+          switch (eventKey) {
+            case 'down':
+              this._moveFocusByDays(7);
+              break;
+            case 'up':
+              this._moveFocusByDays(-7);
+              break;
+            case 'right':
+              this._moveFocusByDays(1);
+              break;
+            case 'left':
+              this._moveFocusByDays(-1);
+              break;
+            case 'enter':
+              if (this.focusedDate) {
+                this.selectedDate = this.focusedDate;
+              }
+              this._close();
+              break;
+            case 'space':
+              if (this._dateEquals(this.focusedDate, this.selectedDate)) {
+                this.selectedDate = '';
+              } else {
+                this.selectedDate = this.focusedDate;
+              }
+              break;
+            case 'home':
+              this.focusedDate = new Date(focus.getFullYear(), focus.getMonth(), 1);
+              break;
+            case 'end':
+              this.focusedDate = new Date(focus.getFullYear(), focus.getMonth() + 1, 0);
+              break;
+            case 'pagedown':
+              this._moveFocusByMonths(e.shiftKey ? 12 : 1);
+              break;
+            case 'pageup':
+              this._moveFocusByMonths(e.shiftKey ? -12 : -1);
+              break;
+          }
         }
       },
 

@@ -40,8 +40,8 @@ Custom property | Description | Default
 `--vaadin-upload-buttons`|A mixin that is applied to the buttons container|`{}`
 `--vaadin-upload-buttons-primary`|A mixin that is applied to the primary buttons container (left side)|`{}`
 `--vaadin-upload-buttons-secondary`|A mixin that is applied to the secondary buttons container (right side)|`{}`
-`--vaadin-upload-button`|A mixin that is applied to all buttons|`{}`
 `--vaadin-upload-button-add`|A mixin that is applied to the upload button|`{}`
+`--vaadin-upload-button-add-disabled`|A mixin that is applied to the upload button when `maxFiles` limit is reached|`{}`
 
 
 
@@ -140,25 +140,18 @@ Custom property | Description | Default
         @apply(--vaadin-upload-buttons-primary);
       }
 
-      #buttonsSecondary {
-        @apply(--layout-horizontal);
-        @apply(--layout-end-justified);
-        @apply(--layout-start);
-        margin-right: -.29em;
-        @apply(--vaadin-upload-buttons-secondary);
-      }
-
-      paper-button {
-        @apply(--paper-font-button);
-        color: var(--primary-color, #00B4F0);
-        padding: .43em .57em;
-        @apply(--vaadin-upload-button);
-      }
-
       #addFiles {
+        @apply(--paper-font-button);
+        padding: .43em .57em;
         background: var(--primary-color, #00B4F0);
         color: var(--primary-font-color, #FFFFFF);
         @apply(--vaadin-upload-button-add);
+      }
+
+      #addFiles[disabled] {
+        background: var(--divider-color, #e0e0e0);
+        color: var(--disabled-text-color, gray);
+        @apply(--vaadin-upload-button-add-disabled);
       }
     </style>
 
@@ -172,16 +165,14 @@ Custom property | Description | Default
           </content>
         </div>
       </div>
-      <div id="buttonsSecondary">
-        <paper-button id="cancelAll" on-tap="_onCancelAllClick" hidden$="[[!showCancelAll]]">[[i18n.cancelAll]]</paper-button>
+    </div>
+    <content select=".file-list">
+      <div id="fileList">
+        <template is="dom-repeat" items="[[files]]" as="file">
+          <vaadin-upload-file file="[[file]]"></vaadin-upload-file>
+        </template>
       </div>
-    </div>
-    <template id="defaultFileTemplate">
-      <vaadin-upload-file file="[[file]]"></vaadin-upload-file>
-    </template>
-    <div id="fileList">
-      <template id="fileListRepeater" is="dom-repeat" items="[[files]]" as="file"></template>
-    </div>
+    </content>
     <content></content>
     <input type="file" id="fileInput" on-change="_onFileInputChange" hidden accept$="{{accept}}" multiple$="[[_isMultiple(maxFiles)]]">
     <paper-ripple id="dragRipple" noink></paper-ripple>
@@ -259,14 +250,6 @@ Custom property | Description | Default
         type: Boolean,
         value: false,
         observer: '_dragoverChanged'
-      },
-
-      /**
-       * Specifies if the cancel-all button is visible.
-       */
-      showCancelAll: {
-        type: Boolean,
-        value: false
       },
 
       /**
@@ -355,7 +338,6 @@ Custom property | Description | Default
        many: 'Upload Files'
       },
       cancel: 'Cancel',
-      cancelAll: 'Cancel All',
       error: {
        tooManyFiles: 'Too Many Files.',
        fileIsTooBig: 'File is Too Big.',
@@ -404,7 +386,6 @@ Custom property | Description | Default
               many: 'Upload Files'
             },
             cancel: 'Cancel',
-            cancelAll: 'Cancel All',
             error: {
               tooManyFiles: 'Too Many Files.',
               fileIsTooBig: 'File is Too Big.',
@@ -441,10 +422,6 @@ Custom property | Description | Default
       'file-retry': '_onFileRetry',
       'file-abort': '_onFileAbort',
       'file-remove': '_onFileRemove',
-    },
-
-    attached: function() {
-      this._templatizeFileList();
     },
 
     _formatSize: function(bytes) {
@@ -637,18 +614,18 @@ Custom property | Description | Default
         file.indeterminate = loaded <= 0 || loaded >= total, true;
         if (file.error) {
           file.indeterminate = file.status = undefined;
-        } else if (file.abort) {
-          file.status = 'Upload cancelled.';
-        } else if (progress < 100) {
-          this._setStatus(file, total, loaded, elapsed, progress);
-          stalledId = setTimeout(function() {
-            file.status = this.i18n.uploading.status.stalled;
-            this._notifyFileChanges(file);
-          }.bind(this), 2000);
-        } else {
-          file.loadedStr = file.totalStr;
-          file.status = this.i18n.uploading.status.processing;
-          file.uploading = false;
+        } else if (!file.abort) {
+          if (progress < 100) {
+            this._setStatus(file, total, loaded, elapsed, progress);
+            stalledId = setTimeout(function() {
+              file.status = this.i18n.uploading.status.stalled;
+              this._notifyFileChanges(file);
+            }.bind(this), 2000);
+          } else {
+            file.loadedStr = file.totalStr;
+            file.status = this.i18n.uploading.status.processing;
+            file.uploading = false;
+          }
         }
 
         this._notifyFileChanges(file);
@@ -660,13 +637,11 @@ Custom property | Description | Default
         if (xhr.readyState == 4) {
           clearTimeout(stalledId);
           file.indeterminate = file.uploading = false;
-          file.status = '';
           if (file.abort) {
-            file.complete = false;
-            file.error = file.progress = undefined;
             this._notifyFileChanges(file);
             return;
           }
+          file.status = '';
           // Custom listener can modify the default behavior either
           // preventing default, changing the xhr, or setting the file error
           var evt = this.fire('upload-response', {file: file, xhr: xhr}, {cancelable: true});
@@ -708,7 +683,7 @@ Custom property | Description | Default
 
       file.status = this.i18n.uploading.status.connecting;
       file.uploading = file.indeterminate = true;
-      file.abort = file.error = undefined;
+      file.complete = file.abort = file.error = false;
       this.fire('upload-start', {file: file, xhr: xhr});
       this._notifyFileChanges(file);
       xhr.send(formData);
@@ -790,13 +765,6 @@ Custom property | Description | Default
       this._addFiles(event.target.files);
     },
 
-    _templatizeFileList: function() {
-      var template = Polymer.dom(this).querySelector('.file') || this.$.defaultFileTemplate;
-      this.$.fileListRepeater.templatize(template);
-      Polymer.Bind.prepareModel(this.$.fileListRepeater);
-      Polymer.Base.prepareModelNotifyPath(this.$.fileListRepeater);
-    },
-
     _onFileRetry: function(event) {
       this._retryFileUpload(event.detail.file);
     },
@@ -808,12 +776,6 @@ Custom property | Description | Default
     _onFileRemove: function(event) {
       event.stopPropagation();
       this._removeFile(event.detail.file);
-    },
-
-    _onCancelAllClick: function(event) {
-      for (var i = this.files.length; i > 0; --i) {
-        this._abortFileUpload(this.files[i - 1]);
-      }
     },
 
     _dragoverChanged: function(dragover) {

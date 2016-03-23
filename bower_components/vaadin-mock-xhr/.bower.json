@@ -19,11 +19,11 @@
     "mock-http-request": "philikon/MockHttpRequest#master"
   },
   "homepage": "https://github.com/manolo/vaadin-mock-xhr",
-  "_release": "74684094fb",
+  "_release": "512ad27c37",
   "_resolution": {
     "type": "branch",
     "branch": "master",
-    "commit": "74684094fb4c57c9bc10cbee6f63f0e528a17cdb"
+    "commit": "512ad27c37b5cd0f25044b280adb10d16845ecce"
   },
   "_source": "git://github.com/manolo/vaadin-mock-xhr.git",
   "_target": "*",
