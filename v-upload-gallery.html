@@ -24,8 +24,30 @@
     #dialog {
       background: rgba(76, 175, 80, 0.09);
     }
+    vaadin-upload {
+      overflow: auto;
+    }
+    :host {
+        @apply(--layout-vertical);
+    }
+    #upload {
+      border: none;
+      --vaadin-upload-buttons: {
+        display: none;
+      }
+    }
   </style>
   <template>
+    <vaadin-upload id="upload" files="{{files}}" class="flex">
+      <div class="file-list">
+        <template is="dom-repeat" items="{{files}}" as="file">
+          <iron-image src="[[_imgToSrc(file)]]" sizing="cover" preload
+             draggable="true" idx$="[[_getIdx()]]"
+             on-dragstart="_onDragStart"
+             ></iron-image>
+        </template>
+      </div>
+    </vaadin-upload>
     <paper-dialog id="dialog" entry-animation="scale-up-animation" exit-animation="fade-out-animation" with-backdrop>
       <iron-image id="preview" draggable="true"></iron-image>
     </paper-dialog>
@@ -34,38 +56,51 @@
 <script>
   Polymer({
     is: "v-upload-gallery",
-    _count: 0,
-    _createImage: function(arg) {
-      var img = document.createElement('iron-image');
-      img.setAttribute('sizing', 'cover');
-      img.setAttribute('preload', true);
-      img.setAttribute('draggable', true);
-      img.setAttribute('idx', img.idx = arg.idx = this._count++);
+    properties: {
+      files: {
+        type: Array,
+        notify: true
+      },
+      _count: {
+        type: Number,
+        value: 0
+      }
+    },
+    listeners: {
+      tap: '_onTap'
+    },
+    ready: function() {
+      // Monkey-patching uploader to avoid over effects when dragging
+      // non Files objects.
+      this.$.upload.__onDragover = this.$.upload._onDragover;
+      this.$.upload._onDragover = function(e) {
+        if (e.dataTransfer.types[0] == 'Files') {
+            e.preventDefault();
+            this.$.upload.__onDragover(e);
+        }
+      }.bind(this);
+    },
+    _getIdx: function() {
+      return this._count;
+    },
+    _imgToSrc: function(arg) {
+      // TODO: find a way to figure out the current iron-image element
+      // to eliminate idx approach.
+      arg.idx = this._count++;
       if (arg instanceof File) {
         var reader  = new FileReader();
         reader.addEventListener("load", function () {
-          img.src = reader.result;
-        }, false);
+          [].filter.call(Polymer.dom(this.root).querySelectorAll('iron-image'), function(e) {
+            return e.getAttribute('idx') == arg.idx;
+          })[0].src = reader.result;
+        }.bind(this), false);
         reader.readAsDataURL(arg);
       } else  {
-        img.src = typeof arg == 'string' && arg || arg.targetUrl || arg.src;
-        // this._getDataUriAjax(img);
+        return typeof arg == 'string' && arg || arg.targetUrl || arg.src;
       }
-      img.addEventListener('dragstart', function(e) {
-        e.dataTransfer.setData('idx', img.idx);
-      });
-      return img;
     },
-    addImage: function(arg) {
-      var img = this._createImage(arg);
-      Polymer.dom(this.root).appendChild(img);
-      window.r = this.root;
-    },
-    removeImage: function(idx) {
-      var img = Polymer.dom(this.root).querySelector('iron-image[idx="' + idx + '"]');
-      if (img) {
-        this.removeChild(img);
-      }
+    _onDragStart: function(e) {
+      e.dataTransfer.setData('idx', e.target.getAttribute('idx'));
     },
     _onTap: function(e) {
       var img = e.target.parentElement;
@@ -73,42 +108,6 @@
         this.$.preview.src = img.src;
         this.$.dialog.open();
       }
-    },
-    _prevent: function(e) {
-       e.preventDefault();
-    },
-    listeners: {
-      tap: '_onTap',
-      dragover: '_prevent',
-      drop: '_prevent'
-    },
-
-    // Unused but left here for reference
-    _getDataUriAjax: function(img) {
-      var xmlHTTP = new XMLHttpRequest();
-      xmlHTTP.open('GET', img.src, true);
-      xmlHTTP.responseType = 'arraybuffer';
-      xmlHTTP.onload = function(e) {
-        var arr = new Uint8Array(this.response);
-        var raw = String.fromCharCode.apply(null,arr);
-        var b64 = btoa(raw);
-        var dataURL="data:image/jpeg;base64," + b64;
-        img.dataURL = dataURL;
-      };
-      xmlHTTP.send();
-    },
-    // Unused but left here for reference
-    _getDataUriCanvas: function(img) {
-      var image = new Image();
-      image.onload = function () {
-        var canvas = document.createElement('canvas');
-        canvas.width = this.naturalWidth;
-        canvas.height = this.naturalHeight;
-        canvas.getContext('2d').drawImage(this, 0, 0);
-        img.dataURL = canvas.toDataURL('image/png');
-      };
-      image.setAttribute('crossOrigin', 'anonymous');
-      image.src = img.src;
     }
   });
 </script>
