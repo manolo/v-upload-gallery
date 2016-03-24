@@ -107,15 +107,15 @@
 
     ajax.addEventListener('response', function(event) {
       event.detail.response.forEach(function(o) {
-        gallery.addImage(o.src);
+        gallery.unshift('files', o);
       });
     });
-    // auto attribute sometimes is run before we add the response handler
+    // the `auto` attribute sometimes is run before we add the response handler
     ajax.generateRequest();
 
     // Using upload-before instead of files-change because it is simpler
     upload.addEventListener('upload-before', function(e) {
-      gallery.addImage(e.detail.file);
+      gallery.unshift('files', e.detail.file);
     });
     upload.i18n.addFiles.many = "upload images";
     // Remove progress when the file has been uploaded
@@ -131,14 +131,14 @@
     drop.addEventListener('upload-before', function(e) {
       e.preventDefault()
       var file = e.detail.file;
-      gallery.addImage(file);
+      gallery.unshift('files', file);
       drop.splice('files', upload.files.indexOf(file), 1)
     });
 
     // We can use image URLs to manually add images to the UI
     input.addEventListener('keydown', function(e) {
       if (e.keyCode == 13) {
-        gallery.addImage(input.value);
+        gallery.unshift('files', {src: input.value});
         input.value = "";
       }
     });
@@ -147,11 +147,16 @@
       console.log(e.dataTransfer.types);
     });
 
-
     // We take advantage of vaadin-upload for having a nice drop area
     // to handle custom actions, in this case remove images from the UI
     trash.addEventListener('drop', function(e) {
-      gallery.removeImage(e.dataTransfer.getData('idx'));
+      var idx = e.dataTransfer.getData('idx');
+      for (var i = 0; idx && i < gallery.files.length; i++) {
+        if (gallery.files[i].idx == idx) {
+          gallery.splice('files', i, 1);
+        }
+      }
+      // gallery.removeImage(e.dataTransfer.getData('idx'));
       trash.removeAttribute('dragover');
     });
     // We don't want to do anything on drop when adding desktop files
@@ -162,7 +167,8 @@
     });
 
     // Monkey-patch uploaders so as they only ripple if the dragged object
-    // is the correct type
+    // is the correct type.
+    // TODO: propose a way to prevent default in vaadin-upload
     upload.__onDragover = trash._onDragover;
     upload._onDragover = function(e) {
       e.preventDefault();
