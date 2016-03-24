@@ -138,7 +138,7 @@
     // We can use image URLs to manually add images to the UI
     input.addEventListener('keydown', function(e) {
       if (e.keyCode == 13) {
-        gallery.push('files', {src: input.value});
+        gallery.unshift('files', {src: input.value});
         input.value = "";
       }
     });
